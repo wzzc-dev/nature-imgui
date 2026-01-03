@@ -1,0 +1,19 @@
+name = "imgui"
+version = "0.1.0"
+authors = ["Nature GUI Team"]
+license = "MIT"
+type = "lib"
+entry = "main" 
+
+[links]
+
+
+libimgui = { linux_amd64 = 'lib/libimgui.a' }
+
+# Native库（包含SDL3、WGPU、ImGui集成）
+libsdl3 = { linux_amd64 = 'lib/libSDL3.a' }
+
+# WGPU Native库
+libwgpu_native = { linux_amd64 = 'lib/libwgpu_native.a' }
+
+[dependencies]

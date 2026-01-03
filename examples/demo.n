@@ -1,0 +1,8 @@
+import fmt
+import imgui as *
+import libc
+
+fn main() {
+    fmt.printf("Hello, World!")
+    sdl_init()
+}

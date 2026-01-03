@@ -1,9 +1,10 @@
 {
     "configurations": [
         {
-            "name": "Mac",
+            "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/native/include"
             ],
             "defines": [],
             "compilerPath": "/Users/zc/.swiftly/bin/clang",

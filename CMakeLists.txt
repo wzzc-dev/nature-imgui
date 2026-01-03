@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(imgui-mbt C CXX)
+project(imgui-n C CXX)
 
 # 设置C++标准
 set(CMAKE_CXX_STANDARD 17)
@@ -81,7 +81,7 @@ set(BINDING_SOURCES
 )
 
 # 创建静态库
-add_library(imgui SHARED ${IMGUI_SOURCES} ${BINDING_SOURCES})
+add_library(imgui STATIC ${IMGUI_SOURCES} ${BINDING_SOURCES})
 
 # 包含目录
 target_include_directories(imgui PRIVATE
@@ -101,6 +101,14 @@ endif()
 target_compile_definitions(imgui PRIVATE "IMGUI_EXAMPLE_SDL3_WGPU")
 if(IMGUI_WGPU_DIR)
     target_compile_definitions(imgui PRIVATE "IMGUI_IMPL_WEBGPU_BACKEND_WGPU")
+endif()
+
+# Apple平台特殊编译选项
+if(APPLE)
+    set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/lib/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_app.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_imgui.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif()
 
 # 链接库（根据平台不同使用不同的链接方式）

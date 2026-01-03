@@ -26,6 +26,13 @@ elseif(UNIX AND NOT APPLE)
     endif()
     if(NOT SDL3_FOUND)
         message(WARNING "SDL3 not found. Install with: sudo apt-get install libsdl3-dev (Ubuntu/Debian)")
+    else()
+        # 创建SDL3::SDL3别名目标
+        add_library(SDL3::SDL3 INTERFACE IMPORTED)
+        set_target_properties(SDL3::SDL3 PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${SDL3_INCLUDE_DIRS}"
+            INTERFACE_LINK_LIBRARIES "${SDL3_LIBRARIES}"
+        )
     endif()
 elseif(APPLE)
     # macOS下使用Homebrew安装SDL3

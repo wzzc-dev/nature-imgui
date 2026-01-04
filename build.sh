@@ -25,19 +25,85 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update
         sudo apt-get install -y cmake
     fi
-
-    # 安装SDL3开发包
-    if ! dpkg -l | grep -q libsdl3-dev; then
-        echo "正在安装SDL3..."
-        sudo apt-get install -y libsdl3-dev libgl1-mesa-dev
-    fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     echo "检测到macOS系统"
     if ! command -v brew &> /dev/null; then
         echo "请先安装Homebrew: https://brew.sh"
         exit 1
     fi
-    brew install sdl3 cmake
+    if ! command -v cmake &> /dev/null; then
+        echo "正在安装CMake..."
+        brew install cmake
+    fi
+fi
+
+# 从源码构建 SDL3 静态库
+SDL_BUILD_DIR="external/SDL"
+SDL_INSTALL_DIR="$HOME/sdl3-static"
+
+echo "========================================"
+echo "检查 SDL3 静态库..."
+echo "========================================"
+
+if [ -f "$SDL_INSTALL_DIR/lib/libSDL3.a" ]; then
+    echo "[OK] SDL3 静态库已存在: $SDL_INSTALL_DIR/lib/libSDL3.a"
+else
+    echo "SDL3 静态库未找到，正在从源码构建..."
+    echo ""
+
+    if [ -d "$SDL_BUILD_DIR" ]; then
+        echo "删除旧的 SDL 源码目录..."
+        rm -rf "$SDL_BUILD_DIR"
+    fi
+
+    echo "正在克隆 SDL 仓库..."
+    git clone https://github.com/libsdl-org/SDL.git "$SDL_BUILD_DIR"
+    if [ $? -ne 0 ]; then
+        echo "[FAIL] SDL 克隆失败"
+        exit 1
+    fi
+
+    echo "切换到 SDL release-3.4.0..."
+    cd "$SDL_BUILD_DIR"
+    git checkout release-3.4.0
+    if [ $? -ne 0 ]; then
+        echo "[FAIL] SDL 切换分支失败"
+        exit 1
+    fi
+
+    echo "创建构建目录..."
+    mkdir -p build_static
+    cd build_static
+
+    echo "配置 CMake..."
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_OSX_ARCHITECTURES=arm64 \
+        -DSDL_STATIC=ON \
+        -DSDL_SHARED=OFF \
+        -DCMAKE_INSTALL_PREFIX="$SDL_INSTALL_DIR"
+
+    if [ $? -ne 0 ]; then
+        echo "[FAIL] CMake 配置失败"
+        exit 1
+    fi
+
+    echo "构建 SDL3 静态库..."
+    make -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
+    if [ $? -ne 0 ]; then
+        echo "[FAIL] SDL3 构建失败"
+        exit 1
+    fi
+
+    echo "安装 SDL3 静态库..."
+    make install
+    if [ $? -ne 0 ]; then
+        echo "[FAIL] SDL3 安装失败"
+        exit 1
+    fi
+
+    cd ../../..
+    echo "[OK] SDL3 静态库构建完成"
 fi
 
 # 检查external目录是否存在，不存在则创建
@@ -74,7 +140,7 @@ if [ ! -d "$WGPU_DIR" ]; then
     echo ""
     echo "目录结构应为："
     echo "  $WGPU_DIR/include/webgpu/webgpu.h"
-    echo "  $WGPU_DIR/lib/libwgpu_native.dylib (macOS) 或 libwgpu_native.so (Linux)"
+    echo "  $WGPU_DIR/lib/libwgpu_native.a"
     echo ""
     exit 1
 else
@@ -93,7 +159,7 @@ else
     fi
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        WGPU_LIB="$WGPU_LIB_DIR/libwgpu_native.dylib"
+        WGPU_LIB="$WGPU_LIB_DIR/libwgpu_native.a"
     else
         WGPU_LIB="$WGPU_LIB_DIR/libwgpu_native.so"
     fi
@@ -109,24 +175,23 @@ else
     echo "WGPU验证成功！"
 fi
 
-# 验证SDL3
-echo "正在验证SDL3..."
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if ! dpkg -l | grep -q libsdl3-dev; then
-        echo "[FAIL] SDL3开发包未安装"
-        echo "请运行: sudo apt-get install libsdl3-dev"
-        exit 1
-    else
-        echo "[OK] SDL3开发包已安装"
-    fi
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    if ! brew list sdl3 &> /dev/null; then
-        echo "[FAIL] SDL3未通过Homebrew安装"
-        echo "请运行: brew install sdl3"
-        exit 1
-    else
-        echo "[OK] SDL3已通过Homebrew安装"
-    fi
+# 验证SDL3静态库
+echo "========================================"
+echo "验证 SDL3 静态库..."
+echo "========================================"
+
+if [ ! -f "$SDL_INSTALL_DIR/lib/libSDL3.a" ]; then
+    echo "[FAIL] SDL3 静态库未找到: $SDL_INSTALL_DIR/lib/libSDL3.a"
+    exit 1
+else
+    echo "[OK] SDL3 静态库已找到"
+fi
+
+if [ ! -d "$SDL_INSTALL_DIR/include" ]; then
+    echo "[FAIL] SDL3 头文件目录未找到: $SDL_INSTALL_DIR/include"
+    exit 1
+else
+    echo "[OK] SDL3 头文件目录已找到"
 fi
 
 # 创建构建目录
@@ -164,9 +229,9 @@ echo "拷贝运行时库到 $TARGET_DIR 目录..."
 
 # 拷贝WGPU库
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.dylib"
+    WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.a"
 else
-    WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.so"
+    WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.a"
 fi
 
 if [ -f "$WGPU_LIB" ]; then
@@ -179,9 +244,9 @@ fi
 
 # 拷贝imgui库
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    IMGUI_LIB="build/libimgui.dylib"
+    IMGUI_LIB="build/libimgui.a"
 else
-    IMGUI_LIB="build/libimgui.so"
+    IMGUI_LIB="build/libimgui.a"
 fi
 
 if [ -f "$IMGUI_LIB" ]; then
@@ -192,58 +257,52 @@ else
     echo "[WARN] imgui库未找到: $IMGUI_LIB"
 fi
 
-# macOS下修复动态库加载路径
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "修复动态库加载路径 (macOS)..."
+# 复制库文件到 lib/darwin_arm64 目录
+echo "========================================"
+echo "复制库文件到 lib/darwin_arm64..."
+echo "========================================"
 
-    # 先修复库文件的内部路径
-    install_name_tool -id "@rpath/libimgui.dylib" "$TARGET_DIR/libimgui.dylib" 2>/dev/null
-    install_name_tool -id "@rpath/libwgpu_native.dylib" "$TARGET_DIR/libwgpu_native.dylib" 2>/dev/null
-    install_name_tool -change "@rpath/libwgpu_native.dylib" "@rpath/libwgpu_native.dylib" "$TARGET_DIR/libimgui.dylib" 2>/dev/null
+# 创建目标目录
+mkdir -p "lib/darwin_arm64"
 
-    # 检查是否存在 nature 命令
-    if command -v nature &> /dev/null; then
-            echo "运行 nature 构建..."
-            # 只构建main包，而不是整个项目
-            nature build -o "$TARGET_DIR/main" main.n
+# 复制 SDL3 静态库
+if [ -f "$SDL_INSTALL_DIR/lib/libSDL3.a" ]; then
+    cp "$SDL_INSTALL_DIR/lib/libSDL3.a" "lib/darwin_arm64/"
+    echo "[OK] libSDL3.a 已复制到 lib/darwin_arm64/"
+else
+    echo "[WARN] libSDL3.a 未找到"
+fi
 
-            # nature 构建完成后，修复可执行文件的 rpath
-            EXECUTABLE="$TARGET_DIR/main"
-            if [ ! -f "$EXECUTABLE" ]; then
-                EXECUTABLE="$TARGET_DIR/main.exe"
-            fi
+# 复制 WGPU 库
+if [ -f "$WGPU_DIR/lib/libwgpu_native.a" ]; then
+    cp "$WGPU_DIR/lib/libwgpu_native.a" "lib/darwin_arm64/"
+    echo "[OK] libwgpu_native.a 已复制到 lib/darwin_arm64/"
+else
+    echo "[WARN] libwgpu_native.a 未找到"
+fi
 
-            if [ -f "$EXECUTABLE" ]; then
-                # 添加 rpath，使程序可以从同一目录加载动态库
-                install_name_tool -delete_rpath /usr/local/lib "$EXECUTABLE" 2>/dev/null || true
-                install_name_tool -delete_rpath @executable_path "$EXECUTABLE" 2>/dev/null || true
-                install_name_tool -add_rpath "@loader_path" "$EXECUTABLE" 2>/dev/null
-
-                # 修改可执行文件对 imgui 库的引用
-                install_name_tool -change "libimgui.dylib" "@rpath/libimgui.dylib" "$EXECUTABLE" 2>/dev/null
-
-                echo "[OK] 可执行文件动态库路径已修复"
-            fi
-        else
-            echo "未找到 nature 命令，跳过 nature 构建"
-            echo "请手动运行 'nature build main.n' 后执行以下命令修复动态库路径："
-            echo "  install_name_tool -add_rpath @loader_path $TARGET_DIR/main.exe"
-            echo "  install_name_tool -change libimgui.dylib @rpath/libimgui.dylib $TARGET_DIR/main.exe"
-        fi
-
-    echo "[OK] 库文件动态库路径已修复"
+# 复制 ImGui 库
+if [ -f "build/libimgui.a" ]; then
+    cp "build/libimgui.a" "lib/darwin_arm64/"
+    echo "[OK] libimgui.a 已复制到 lib/darwin_arm64/"
+else
+    echo "[WARN] libimgui.a 未找到"
 fi
 
 echo "========================================"
 echo "构建成功！"
 echo "========================================"
-echo "库文件位置: build/libimgui.dylib (macOS) 或 build/libimgui.so (Linux)"
+echo "库文件位置:"
+echo "  - build/libimgui.a"
+echo "  - lib/darwin_arm64/libSDL3.a"
+echo "  - lib/darwin_arm64/libwgpu_native.a"
+echo "  - lib/darwin_arm64/libimgui.a"
 echo "运行时库位置: target/"
 echo ""
 echo "库已准备就绪，可供 nature 使用"
 echo ""
 echo "使用方法："
-echo "1. 在 nature 项目中链接 build/libimgui.a"
-echo "2. SDL3 和 WGPU 库在 target/ 目录中"
+echo "1. 在 nature 项目中链接 lib/darwin_arm64/libimgui.a"
+echo "2. SDL3 和 WGPU 库在 lib/darwin_arm64/ 目录中"
 echo "3. 这些库将在运行时自动加载"
 echo "========================================"

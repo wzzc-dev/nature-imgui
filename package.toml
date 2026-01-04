@@ -8,12 +8,12 @@ entry = "main"
 [links]
 
 
-libimgui = { linux_amd64 = 'lib/libimgui.a' }
+libimgui = { linux_amd64 = 'lib/libimgui.a', darwin_arm64 = 'lib/darwin_arm64/libimgui.a' }
 
 # Native库（包含SDL3、WGPU、ImGui集成）
-libsdl3 = { linux_amd64 = 'lib/libSDL3.a' }
+libsdl3 = { linux_amd64 = 'lib/libSDL3.a', darwin_arm64 = 'lib/darwin_arm64/libSDL3.a' }
 
 # WGPU Native库
-libwgpu_native = { linux_amd64 = 'lib/libwgpu_native.a' }
+libwgpu_native = { linux_amd64 = 'lib/libwgpu_native.a', darwin_arm64 = 'lib/darwin_arm64//libwgpu_native.a'}
 
 [dependencies]

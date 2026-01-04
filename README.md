@@ -237,16 +237,25 @@ make -j$(nproc)
 
 ### macOS
 ```bash
-# 安装依赖
-brew install sdl3 cmake
-
-# 下载WGPU-Native
-# 放置到 external/wgpu-macos-aarch64-release/
-
-# 构建Native库
-mkdir -p build && cd build
-cmake ..
-make -j$(sysctl -n hw.ncpu)
+nature build --ldflags \
+  '-framework Cocoa \
+   -framework Metal \
+   -framework QuartzCore \
+   -framework CoreVideo \
+   -framework IOKit \
+   -framework CoreGraphics \
+   -framework CoreFoundation \
+   -framework AVFoundation \
+   -framework CoreMedia \
+   -framework CoreAudio \
+   -framework AudioToolbox \
+   -framework CoreHaptics \
+   -framework GameController \
+   -framework ForceFeedback \
+   -framework Carbon \
+   -framework UniformTypeIdentifiers \
+   -lc++' \
+  examples/demo.n
 ```
 
 ### Windows

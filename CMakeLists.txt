@@ -35,10 +35,19 @@ elseif(UNIX AND NOT APPLE)
         )
     endif()
 elseif(APPLE)
-    # macOS下使用Homebrew安装SDL3
-    find_package(SDL3 QUIET)
-    if(NOT SDL3_FOUND)
-        message(WARNING "SDL3 not found. Install with: brew install sdl3")
+    # macOS下使用从源码构建的SDL3静态库
+    set(SDL3_INSTALL_DIR "$ENV{HOME}/sdl3-static")
+    if(EXISTS "${SDL3_INSTALL_DIR}/lib/libSDL3.a")
+        # 创建SDL3静态库目标
+        add_library(SDL3::SDL3 STATIC IMPORTED)
+        set_target_properties(SDL3::SDL3 PROPERTIES
+            IMPORTED_LOCATION "${SDL3_INSTALL_DIR}/lib/libSDL3.a"
+            INTERFACE_INCLUDE_DIRECTORIES "${SDL3_INSTALL_DIR}/include"
+        )
+        set(SDL3_FOUND TRUE)
+        message(STATUS "SDL3 static library found at: ${SDL3_INSTALL_DIR}")
+    else()
+        message(WARNING "SDL3 not found. Run build.sh to build from source or install with: brew install sdl3")
     endif()
 endif()
 

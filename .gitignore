@@ -2,3 +2,6 @@ build/*
 external/*
 target/*
 .codebuddy/*
+lib/.DS_Store
+main
+imgui.ini

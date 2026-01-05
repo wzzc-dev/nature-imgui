@@ -5,4 +5,5 @@ import libc
 fn main() {
     fmt.printf("Hello, World!")
     sdl_init()
+    main_loop()
 }

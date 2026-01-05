@@ -50,6 +50,8 @@ void imgui_sdl3_new_frame(void);
 // WebGPU渲染
 void render_frame(void);
 
+void main_loop(void);
+
 #ifdef __cplusplus
 }
 #endif

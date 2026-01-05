@@ -213,10 +213,7 @@ extern "C" int sdl_init(void)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
+    
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -235,28 +232,16 @@ extern "C" int sdl_init(void)
     init_info.RenderTargetFormat = wgpu_surface_configuration.format;
     init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
     ImGui_ImplWGPU_Init(&init_info);
+    
 
-    // Load Fonts
-    // - If fonts are not explicitly loaded, Dear ImGui will call AddFontDefault() to select an embedded font: either AddFontDefaultVector() or AddFontDefaultBitmap().
-    //   This selection is based on (style.FontSizeBase * style.FontScaleMain * style.FontScaleDpi) reaching a small threshold.
-    // - You can load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - If a file cannot be loaded, AddFont functions will return a nullptr. Please handle those errors in your code (e.g. use an assertion, display an error and quit).
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use FreeType for higher quality font rendering.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-    //style.FontSizeBase = 20.0f;
-    //io.Fonts->AddFontDefaultVector();
-    //io.Fonts->AddFontDefaultBitmap();
-#ifndef IMGUI_DISABLE_FILE_FUNCTIONS
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf");
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf");
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf");
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf");
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf");
-    //IM_ASSERT(font != nullptr);
-#endif
+    return 0;
+}    
+extern "C" void main_loop() {
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
+    
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -264,21 +249,10 @@ extern "C" int sdl_init(void)
 
     // Main loop
     bool done = false;
-#ifdef __EMSCRIPTEN__
-    // For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
-    // You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
-    io.IniFilename = nullptr;
-    EMSCRIPTEN_MAINLOOP_BEGIN
-#else
+
     while (!done)
-#endif
+
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        // [If using SDL_MAIN_USE_CALLBACKS: call ImGui_ImplSDL3_ProcessEvent() from your SDL_AppEvent() function]
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -390,156 +364,18 @@ extern "C" int sdl_init(void)
         WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
         wgpuQueueSubmit(wgpu_queue, 1, &cmd_buffer);
 
-#ifndef __EMSCRIPTEN__
+
         wgpuSurfacePresent(wgpu_surface);
-        // Tick needs to be called in Dawn to display validation errors
-#if defined(IMGUI_IMPL_WEBGPU_BACKEND_DAWN)
-        wgpuDeviceTick(wgpu_device);
-#endif
-#endif
+
         wgpuTextureViewRelease(texture_view);
         wgpuRenderPassEncoderRelease(pass);
         wgpuCommandEncoderRelease(encoder);
         wgpuCommandBufferRelease(cmd_buffer);
     }
-#ifdef __EMSCRIPTEN__
-    EMSCRIPTEN_MAINLOOP_END;
-#endif
 
     
-
-    return 0;
+    
 }
-
-// // SDL3初始化和管理
-// extern "C" int sdl_init(void) {
-//     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
-//     {
-//         printf("Error: SDL_Init(): %s\n", SDL_GetError());
-//         return 1;
-//     }
-
-//     // Create SDL window graphics context
-//     // 创建窗口
-//     g_window = SDL_CreateWindow("Dear ImGui + Moonbit", g_width, g_height, SDL_WINDOW_RESIZABLE);
-//     if (g_window == nullptr)
-//     {
-//         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-//         return 1;
-//     }
-
-//     // 创建 WGPU 实例
-//     WGPUInstanceDescriptor instance_desc = {};
-//     instance_desc.nextInChain = NULL;
-//     g_instance = wgpuCreateInstance(&instance_desc);
-//     if (!g_instance) {
-//         printf("Failed to create WGPU instance\n");
-//         SDL_DestroyWindow(g_window);
-//         SDL_Quit();
-//         return 0;
-//     }
-
-//     // 请求 WGPU 适配器
-//     g_adapter = RequestAdapter(g_instance);
-//     if (!g_adapter) {
-//         printf("Failed to get WGPU adapter\n");
-//         wgpuInstanceRelease(g_instance);
-//         SDL_DestroyWindow(g_window);
-//         SDL_Quit();
-//         return 0;
-//     }
-
-//     // 请求 WGPU 设备
-//     g_device = RequestDevice(g_adapter);
-//     if (!g_device) {
-//         printf("Failed to get WGPU device\n");
-//         wgpuAdapterRelease(g_adapter);
-//         wgpuInstanceRelease(g_instance);
-//         SDL_DestroyWindow(g_window);
-//         SDL_Quit();
-//         return 0;
-//     }
-
-//     // 获取队列
-//     g_queue = wgpuDeviceGetQueue(g_device);
-
-//     // 创建 WGPU Surface (使用 ImGui 的辅助函数)
-//     SDL_PropertiesID propertiesID = SDL_GetWindowProperties(g_window);
-
-//     ImGui_ImplWGPU_CreateSurfaceInfo create_info = {};
-//     create_info.Instance = g_instance;
-// #define SDL_PLATFORM_MACOS 1
-// #if defined(SDL_PLATFORM_WIN32)
-//     {
-//         create_info.System = "win32";
-//         create_info.RawWindow = (void*)SDL_GetPointerProperty(propertiesID, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-//         create_info.RawInstance = (void*)GetModuleHandle(NULL);
-//         g_surface = ImGui_ImplWGPU_CreateWGPUSurfaceHelper(&create_info);
-//     }
-// #elif defined(SDL_PLATFORM_MACOS)
-//     {
-//         create_info.System = "metal";
-//         create_info.RawWindow = (void*)SDL_GetPointerProperty(propertiesID, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
-//         create_info.RawInstance = NULL;
-//         g_surface = ImGui_ImplWGPU_CreateWGPUSurfaceHelper(&create_info);
-//     }
-// #else
-//     // Linux 支持 (X11 或 Wayland)
-//     {
-//         create_info.System = "";
-//         void* display = SDL_GetPointerProperty(propertiesID, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
-//         if (display) {
-//             create_info.System = "x11";
-//             create_info.RawWindow = (void*)SDL_GetNumberProperty(propertiesID, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-//             create_info.RawInstance = display;
-//         } else {
-//             create_info.System = "wayland";
-//             create_info.RawWindow = SDL_GetPointerProperty(propertiesID, SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, NULL);
-//             create_info.RawInstance = SDL_GetPointerProperty(propertiesID, SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL);
-//         }
-//         if (create_info.RawWindow) {
-//             g_surface = ImGui_ImplWGPU_CreateWGPUSurfaceHelper(&create_info);
-//         }
-//     }
-//     if (!g_surface) {
-//         printf("Unsupported platform for WebGPU or failed to create surface\n");
-//         wgpuQueueRelease(g_queue);
-//         wgpuDeviceRelease(g_device);
-//         wgpuAdapterRelease(g_adapter);
-//         wgpuInstanceRelease(g_instance);
-//         SDL_DestroyWindow(g_window);
-//         SDL_Quit();
-//         return 0;
-//     }
-// #endif
-
-//     if (!g_surface) {
-//         printf("Failed to create WGPU surface\n");
-//         wgpuQueueRelease(g_queue);
-//         wgpuDeviceRelease(g_device);
-//         wgpuAdapterRelease(g_adapter);
-//         wgpuInstanceRelease(g_instance);
-//         SDL_DestroyWindow(g_window);
-//         SDL_Quit();
-//         return 0;
-//     }
-
-//     // 配置 Surface
-//     WGPUSurfaceCapabilities surface_capabilities = {};
-//     wgpuSurfaceGetCapabilities(g_surface, g_adapter, &surface_capabilities);
-
-//     g_surface_config.device = g_device;
-//     g_surface_config.format = surface_capabilities.formats[0];
-//     g_surface_config.usage = WGPUTextureUsage_RenderAttachment;
-//     g_surface_config.alphaMode = WGPUCompositeAlphaMode_Auto;
-//     g_surface_config.presentMode = WGPUPresentMode_Fifo;
-//     g_surface_config.width = g_width;
-//     g_surface_config.height = g_height;
-
-//     wgpuSurfaceConfigure(g_surface, &g_surface_config);
-
-//     return 1;
-// }
 
 extern "C" void sdl_create_window(int width, int height, const char* title) {
     // SDL 窗口已在 sdl_init 中创建，这里只更新标题

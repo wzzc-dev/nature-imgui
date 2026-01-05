@@ -3,3 +3,6 @@ import fmt
 
 #linkid sdl_init
 fn sdl_init():i32
+
+#linkid main_loop
+fn main_loop()

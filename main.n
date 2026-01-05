@@ -5,12 +5,76 @@ import libc
 #linkid sdl_init
 fn sdl_init():i32
 
-#linkid create_window
-fn create_window():anyptr
-
 #linkid sdl_terminate
 fn sdl_terminate(anyptr window)
 
+// 窗口创建和管理
+#linkid create_window
+fn create_window(anyptr title, i32 width, i32 height):anyptr
+
+#linkid destroy_window
+fn destroy_window(anyptr window)
+
+// ImGui 上下文管理
+#linkid imgui_init
+fn imgui_init(anyptr window)
+
+#linkid imgui_shutdown
+fn imgui_shutdown()
+
+// 渲染循环相关
+#linkid imgui_new_frame
+fn imgui_new_frame()
+
+#linkid imgui_render
+fn imgui_render()
+
+// 事件处理
+#linkid imgui_process_event
+fn imgui_process_event(anyptr event):bool
+
+#linkid imgui_should_exit
+fn imgui_should_exit(anyptr window):bool
+
+// 常用窗口和控件
+#linkid show_demo_window
+fn show_demo_window(anyptr p_open)
+
+#linkid begin_window
+fn begin_window(anyptr name)
+
+#linkid end_window
+fn end_window()
+
+#linkid text
+fn text(anyptr text)
+
+#linkid button
+fn button(anyptr label):bool
+
+#linkid checkbox
+fn checkbox(anyptr label, anyptr v)
+
+#linkid slider_float
+fn slider_float(anyptr label, anyptr v, f32 v_min, f32 v_max)
+
+#linkid color_edit3
+fn color_edit3(anyptr label, anyptr col)
+
+#linkid same_line
+fn same_line()
+
+// 布局和样式
+#linkid set_clear_color
+fn set_clear_color(f32 r, f32 g, f32 b, f32 a)
+
+#linkid begin_frame
+fn begin_frame(anyptr window)
+
+#linkid end_frame
+fn end_frame()
+
+// 主循环（保留用于简单示例）
 #linkid main_loop
 fn main_loop(anyptr window)
 

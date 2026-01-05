@@ -24,6 +24,10 @@ static WGPUQueue                wgpu_queue = nullptr;
 static WGPUSurfaceConfiguration wgpu_surface_configuration = {};
 static int                      wgpu_surface_width = 1280;
 static int                      wgpu_surface_height = 800;
+static ImVec4                   g_clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+static WGPUSurfaceTexture       g_surface_texture = {};
+static WGPUCommandEncoder       g_encoder = nullptr;
+static WGPURenderPassEncoder    g_pass = nullptr;
 
 // Forward declarations
 static bool         InitWGPU(SDL_Window* window);
@@ -75,6 +79,7 @@ static WGPUDevice RequestDevice(WGPUAdapter& adapter) {
     wgpuAdapterRequestDevice(adapter, nullptr, deviceCallbackInfo);
     return local_device;
 }
+
 static void ResizeSurface(int width, int height)
 {
     wgpu_surface_configuration.width  = wgpu_surface_width  = width;
@@ -82,196 +87,15 @@ static void ResizeSurface(int width, int height)
     wgpuSurfaceConfigure( wgpu_surface, (WGPUSurfaceConfiguration*)&wgpu_surface_configuration );
 }
 
-extern "C" int sdl_init(void) 
+extern "C" int sdl_init(void)
 {
     // Setup SDL
-    // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return 1;
     }
     return 0;
-}    
-
-extern "C" SDL_Window* create_window() {
-    // Create SDL window graphics context
-    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-    SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
-    SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL3+WebGPU example", wgpu_surface_width, wgpu_surface_height, window_flags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-    }
-
-    // Initialize WGPU
-    InitWGPU(window);
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL3_InitForOther(window);
-
-    ImGui_ImplWGPU_InitInfo init_info;
-    init_info.Device = wgpu_device;
-    init_info.NumFramesInFlight = 3;
-    init_info.RenderTargetFormat = wgpu_surface_configuration.format;
-    init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
-    ImGui_ImplWGPU_Init(&init_info);
-
-    return window;
-}
-
-extern "C" void main_loop(SDL_Window* window, bool show_demo_window, bool show_another_window) {
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-
-    // Main loop
-    bool done = false;
-
-    while (!done)
-
-    {
-        
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-                done = true;
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-                done = true;
-        }
-
-        // [If using SDL_MAIN_USE_CALLBACKS: all code below would likely be your SDL_AppIterate() function]
-        // React to changes in screen size
-        int width, height;
-        SDL_GetWindowSize(window, &width, &height);
-        if (width != wgpu_surface_width || height != wgpu_surface_height)
-            ResizeSurface(width, height);
-
-        // Check surface status for error. If texture is not optimal, try to reconfigure the surface.
-        WGPUSurfaceTexture surface_texture;
-        wgpuSurfaceGetCurrentTexture(wgpu_surface, &surface_texture);
-        if (ImGui_ImplWGPU_IsSurfaceStatusError(surface_texture.status))
-        {
-            fprintf(stderr, "Unrecoverable Surface Texture status=%#.8x\n", surface_texture.status);
-            abort();
-        }
-        if (ImGui_ImplWGPU_IsSurfaceStatusSubOptimal(surface_texture.status))
-        {
-            if (surface_texture.texture)
-                wgpuTextureRelease(surface_texture.texture);
-            if (width > 0 && height > 0)
-                ResizeSurface(width, height);
-            continue;
-        }
-
-        // Start the Dear ImGui frame
-        ImGui_ImplWGPU_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                                // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");                     // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);            // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);                  // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color);       // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);         // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
-        // Rendering
-        ImGui::Render();
-
-        WGPUTextureViewDescriptor view_desc = {};
-        view_desc.format = wgpu_surface_configuration.format;
-        view_desc.dimension = WGPUTextureViewDimension_2D;
-        view_desc.mipLevelCount = WGPU_MIP_LEVEL_COUNT_UNDEFINED;
-        view_desc.arrayLayerCount = WGPU_ARRAY_LAYER_COUNT_UNDEFINED;
-        view_desc.aspect = WGPUTextureAspect_All;
-
-        WGPUTextureView texture_view = wgpuTextureCreateView(surface_texture.texture, &view_desc);
-
-        WGPURenderPassColorAttachment color_attachments = {};
-        color_attachments.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-        color_attachments.loadOp = WGPULoadOp_Clear;
-        color_attachments.storeOp = WGPUStoreOp_Store;
-        color_attachments.clearValue = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        color_attachments.view = texture_view;
-
-        WGPURenderPassDescriptor render_pass_desc = {};
-        render_pass_desc.colorAttachmentCount = 1;
-        render_pass_desc.colorAttachments = &color_attachments;
-        render_pass_desc.depthStencilAttachment = nullptr;
-
-        WGPUCommandEncoderDescriptor enc_desc = {};
-        WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(wgpu_device, &enc_desc);
-
-        WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &render_pass_desc);
-        ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
-        wgpuRenderPassEncoderEnd(pass);
-
-        WGPUCommandBufferDescriptor cmd_buffer_desc = {};
-        WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
-        wgpuQueueSubmit(wgpu_queue, 1, &cmd_buffer);
-
-
-        wgpuSurfacePresent(wgpu_surface);
-
-        wgpuTextureViewRelease(texture_view);
-        wgpuRenderPassEncoderRelease(pass);
-        wgpuCommandEncoderRelease(encoder);
-        wgpuCommandBufferRelease(cmd_buffer);
-    }
-
-    
-    
 }
 
 extern "C" void sdl_terminate(SDL_Window* window) {
@@ -289,6 +113,350 @@ extern "C" void sdl_terminate(SDL_Window* window) {
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
+
+extern "C" SDL_Window* create_window(const char* title, int width, int height) {
+    // Update global width/height
+    wgpu_surface_width = width;
+    wgpu_surface_height = height;
+
+    // Create SDL window graphics context
+    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
+    SDL_Window* window = SDL_CreateWindow(title, width, height, window_flags);
+    if (window == nullptr)
+    {
+        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+        return nullptr;
+    }
+
+    // Initialize WGPU
+    if (!InitWGPU(window)) {
+        printf("Error: InitWGPU failed\n");
+        SDL_DestroyWindow(window);
+        return nullptr;
+    }
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL3_InitForOther(window);
+
+    ImGui_ImplWGPU_InitInfo init_info;
+    init_info.Device = wgpu_device;
+    init_info.NumFramesInFlight = 3;
+    init_info.RenderTargetFormat = wgpu_surface_configuration.format;
+    init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
+    ImGui_ImplWGPU_Init(&init_info);
+
+    return window;
+}
+
+extern "C" void destroy_window(SDL_Window* window) {
+    if (window) {
+        ImGui_ImplWGPU_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
+
+        wgpuSurfaceUnconfigure(wgpu_surface);
+        wgpuSurfaceRelease(wgpu_surface);
+        wgpuQueueRelease(wgpu_queue);
+        wgpuDeviceRelease(wgpu_device);
+        wgpuInstanceRelease(wgpu_instance);
+
+        SDL_DestroyWindow(window);
+    }
+}
+
+extern "C" void imgui_init(SDL_Window* window) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+
+    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+
+    ImGui_ImplSDL3_InitForOther(window);
+
+    ImGui_ImplWGPU_InitInfo init_info;
+    init_info.Device = wgpu_device;
+    init_info.NumFramesInFlight = 3;
+    init_info.RenderTargetFormat = wgpu_surface_configuration.format;
+    init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
+    ImGui_ImplWGPU_Init(&init_info);
+}
+
+extern "C" void imgui_shutdown(void) {
+    ImGui_ImplWGPU_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+}
+
+extern "C" void imgui_new_frame(void) {
+    ImGui_ImplWGPU_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+}
+
+extern "C" void imgui_render(void) {
+    ImGui::Render();
+}
+
+extern "C" bool imgui_process_event(SDL_Event* event) {
+    ImGui_ImplSDL3_ProcessEvent(event);
+    return true;
+}
+
+extern "C" bool imgui_should_exit(SDL_Window* window) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+        if (event.type == SDL_EVENT_QUIT)
+            return true;
+        if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
+            return true;
+    }
+    return false;
+}
+
+extern "C" void show_demo_window(bool* p_open) {
+    ImGui::ShowDemoWindow(p_open);
+}
+
+extern "C" void begin_window(const char* name) {
+    ImGui::Begin(name);
+}
+
+extern "C" void end_window(void) {
+    ImGui::End();
+}
+
+extern "C" void text(const char* text) {
+    ImGui::Text("%s", text);
+}
+
+extern "C" bool button(const char* label) {
+    return ImGui::Button(label);
+}
+
+extern "C" void checkbox(const char* label, bool* v) {
+    ImGui::Checkbox(label, v);
+}
+
+extern "C" void slider_float(const char* label, float* v, float v_min, float v_max) {
+    ImGui::SliderFloat(label, v, v_min, v_max);
+}
+
+extern "C" void color_edit3(const char* label, float* col) {
+    ImGui::ColorEdit3(label, col);
+}
+
+extern "C" void same_line(void) {
+    ImGui::SameLine();
+}
+
+extern "C" void set_clear_color(float r, float g, float b, float a) {
+    g_clear_color = ImVec4(r, g, b, a);
+}
+
+extern "C" void begin_frame(SDL_Window* window) {
+    // React to changes in screen size
+    int width, height;
+    SDL_GetWindowSize(window, &width, &height);
+    if (width != wgpu_surface_width || height != wgpu_surface_height)
+        ResizeSurface(width, height);
+
+    // Check surface status
+    wgpuSurfaceGetCurrentTexture(wgpu_surface, &g_surface_texture);
+    if (ImGui_ImplWGPU_IsSurfaceStatusError(g_surface_texture.status)) {
+        fprintf(stderr, "Unrecoverable Surface Texture status=%#.8x\n", g_surface_texture.status);
+        abort();
+    }
+    if (ImGui_ImplWGPU_IsSurfaceStatusSubOptimal(g_surface_texture.status)) {
+        if (g_surface_texture.texture)
+            wgpuTextureRelease(g_surface_texture.texture);
+        if (width > 0 && height > 0)
+            ResizeSurface(width, height);
+    }
+
+    // Start Dear ImGui frame
+    imgui_new_frame();
+}
+
+extern "C" void end_frame(void) {
+    // Prepare render pass and submit
+    WGPUTextureViewDescriptor view_desc = {};
+    view_desc.format = wgpu_surface_configuration.format;
+    view_desc.dimension = WGPUTextureViewDimension_2D;
+    view_desc.mipLevelCount = WGPU_MIP_LEVEL_COUNT_UNDEFINED;
+    view_desc.arrayLayerCount = WGPU_ARRAY_LAYER_COUNT_UNDEFINED;
+    view_desc.aspect = WGPUTextureAspect_All;
+
+    WGPUTextureView texture_view = wgpuTextureCreateView(g_surface_texture.texture, &view_desc);
+
+    WGPURenderPassColorAttachment color_attachments = {};
+    color_attachments.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    color_attachments.loadOp = WGPULoadOp_Clear;
+    color_attachments.storeOp = WGPUStoreOp_Store;
+    color_attachments.clearValue = { g_clear_color.x * g_clear_color.w, g_clear_color.y * g_clear_color.w, g_clear_color.z * g_clear_color.w, g_clear_color.w };
+    color_attachments.view = texture_view;
+
+    WGPURenderPassDescriptor render_pass_desc = {};
+    render_pass_desc.colorAttachmentCount = 1;
+    render_pass_desc.colorAttachments = &color_attachments;
+    render_pass_desc.depthStencilAttachment = nullptr;
+
+    WGPUCommandEncoderDescriptor enc_desc = {};
+    WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(wgpu_device, &enc_desc);
+
+    WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &render_pass_desc);
+    ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
+    wgpuRenderPassEncoderEnd(pass);
+
+    WGPUCommandBufferDescriptor cmd_buffer_desc = {};
+    WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
+    wgpuQueueSubmit(wgpu_queue, 1, &cmd_buffer);
+
+    wgpuSurfacePresent(wgpu_surface);
+
+    wgpuTextureViewRelease(texture_view);
+    wgpuRenderPassEncoderRelease(pass);
+    wgpuCommandEncoderRelease(encoder);
+    wgpuCommandBufferRelease(cmd_buffer);
+}
+extern "C" void render() {
+    ImGui::Render();
+}
+extern "C" void main_loop(SDL_Window* window) {
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    // Our state
+    bool _show_demo_window = true;
+    bool show_another_window = false;
+
+    // Main loop
+    bool done = false;
+
+    while (!done)
+
+    {
+        
+        done = imgui_should_exit(window);
+
+        begin_frame(window);
+    
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (_show_demo_window)
+            show_demo_window(&_show_demo_window);
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            begin_window("Hello, world!");
+            text("This is some useful text.");
+            checkbox("Demo Window", &_show_demo_window);
+            checkbox("Another Window", &show_another_window);
+            slider_float("float", &f, 0.0f, 1.0f);
+            color_edit3("clear color", (float*)&g_clear_color);
+            
+            if (button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            same_line();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            end_window();
+        }
+
+        // 3. Show another simple window.
+        if (show_another_window) {
+            begin_window("Another Window");
+            text("Hello from another window!");
+            if (button("Close Me"))
+                show_another_window = false;
+            end_window();
+        }
+
+        // Rendering
+        render();
+
+        end_frame();
+    }
+}
+
+// extern "C" void main_loop(SDL_Window* window) {
+//     ImGuiIO& io = ImGui::GetIO(); (void)io;
+//     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+//     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+//     // Our state
+//     bool _show_demo_window = true;
+//     bool show_another_window = false;
+
+//     // Main loop
+//     bool done = false;
+
+//     while (!done) {
+//         // Poll events
+//         done = imgui_should_exit(window);
+
+//         // Begin frame (handles resize, surface check, and ImGui new frame)
+//         begin_frame(window);
+
+//         // Show demo window
+//         if (_show_demo_window)
+//             show_demo_window(&_show_demo_window);
+
+//         // Show simple window
+//         {
+//             static float f = 0.0f;
+//             static int counter = 0;
+
+//             begin_window("Hello, world!");
+//             text("This is some useful text.");
+//             checkbox("Demo Window", &_show_demo_window);
+//             checkbox("Another Window", &show_another_window);
+//             slider_float("float", &f, 0.0f, 1.0f);
+//             color_edit3("clear color", (float*)&g_clear_color);
+
+//             if (ImGui::Button("Button"))
+//                 counter++;
+//             ImGui::SameLine();
+//             ImGui::Text("counter = %d", counter);
+
+//             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+//             end_window();
+//         }
+
+//         // Show another window
+//         if (show_another_window) {
+//             begin_window("Another Window");
+//             text("Hello from another window!");
+//             if (ImGui::Button("Close Me"))
+//                 show_another_window = false;
+//             end_window();
+//         }
+
+//         // End frame (renders and presents)
+//         end_frame();
+//     }
+// }
 
 static bool InitWGPU(SDL_Window* window)
 {

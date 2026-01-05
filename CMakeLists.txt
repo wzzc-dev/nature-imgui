@@ -86,7 +86,7 @@ set(IMGUI_SOURCES
 
 # 添加C++绑定源文件
 set(BINDING_SOURCES
-    lib/imgui_bindings.cpp
+    imgui_bindings.cpp
 )
 
 # 创建静态库
@@ -115,7 +115,7 @@ endif()
 # Apple平台特殊编译选项
 if(APPLE)
     set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/lib/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_app.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_imgui.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif()
@@ -153,7 +153,7 @@ elseif(UNIX AND NOT APPLE)
 elseif(APPLE)
     if(SDL3_FOUND AND IMGUI_WGPU_DIR)
         set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
-        set_source_files_properties(${CMAKE_SOURCE_DIR}/lib/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+        set_source_files_properties(${CMAKE_SOURCE_DIR}/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
         set(WGPU_NATIVE_LIB_DIR ${IMGUI_WGPU_DIR}/lib)
         find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_NATIVE_LIB_DIR})
 

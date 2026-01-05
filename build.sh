@@ -216,17 +216,6 @@ fi
 
 cd ..
 
-TARGET_DIR="target"
-
-# 检查并创建 target 目录
-if [ ! -d $TARGET_DIR ]; then
-    echo "创建 $TARGET_DIR 目录..."
-    mkdir $TARGET_DIR
-fi
-
-# 拷贝运行时依赖库到 target 目录
-echo "拷贝运行时库到 $TARGET_DIR 目录..."
-
 # 拷贝WGPU库
 if [[ "$OSTYPE" == "darwin"* ]]; then
     WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.a"
@@ -234,13 +223,6 @@ else
     WGPU_LIB="$WGPU_DIR/lib/libwgpu_native.a"
 fi
 
-if [ -f "$WGPU_LIB" ]; then
-    mkdir -p "$TARGET_DIR"
-    cp "$WGPU_LIB" "$TARGET_DIR/"
-    echo "[OK] WGPU库已拷贝到 target/"
-else
-    echo "[WARN] WGPU库未找到: $WGPU_LIB"
-fi
 
 # 拷贝imgui库
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -249,13 +231,6 @@ else
     IMGUI_LIB="build/libimgui.a"
 fi
 
-if [ -f "$IMGUI_LIB" ]; then
-    mkdir -p "$TARGET_DIR"
-    cp "$IMGUI_LIB" "$TARGET_DIR/"
-    echo "[OK] imgui库已拷贝到 target/"
-else
-    echo "[WARN] imgui库未找到: $IMGUI_LIB"
-fi
 
 # 复制库文件到 lib/darwin_arm64 目录
 echo "========================================"
@@ -297,7 +272,7 @@ echo "  - build/libimgui.a"
 echo "  - lib/darwin_arm64/libSDL3.a"
 echo "  - lib/darwin_arm64/libwgpu_native.a"
 echo "  - lib/darwin_arm64/libimgui.a"
-echo "运行时库位置: target/"
+echo "运行时库位置: lib/darwin_arm64"
 echo ""
 echo "库已准备就绪，可供 nature 使用"
 echo ""
@@ -306,3 +281,25 @@ echo "1. 在 nature 项目中链接 lib/darwin_arm64/libimgui.a"
 echo "2. SDL3 和 WGPU 库在 lib/darwin_arm64/ 目录中"
 echo "3. 这些库将在运行时自动加载"
 echo "========================================"
+
+nature build --ldflags \
+  '-framework Cocoa \
+   -framework Metal \
+   -framework QuartzCore \
+   -framework CoreVideo \
+   -framework IOKit \
+   -framework CoreGraphics \
+   -framework CoreFoundation \
+   -framework AVFoundation \
+   -framework CoreMedia \
+   -framework CoreAudio \
+   -framework AudioToolbox \
+   -framework CoreHaptics \
+   -framework GameController \
+   -framework ForceFeedback \
+   -framework Carbon \
+   -framework UniformTypeIdentifiers \
+   -lc++' \
+  -o target/demo \
+  examples/demo.n 
+

@@ -4,15 +4,31 @@ import imgui
 fn main() {
     fmt.printf("Initializing ImGui Demo...\n")
 
-    // 初始化 SDL 和 ImGui
+    // 1. 初始化 SDL
     if imgui.sdl_init() != 0 {
         fmt.printf("Failed to initialize SDL\n")
         return
     }
 
-    fmt.printf("ImGui initialized successfully!\n")
-    anyptr window = imgui.create_window();
+    fmt.printf("SDL initialized successfully!\n")
+
+    // 2. 创建窗口
+    // 注意：字符串需要转换为 C 字符串指针
+    var title = "Dear ImGui Demo"
+    anyptr title_ptr = title.to_cstr() as anyptr
+    anyptr window = imgui.create_window(title_ptr, 1280, 800)
+
+    fmt.printf("Window created successfully!\n")
+
+    // 3. 使用细粒度函数进行初始化（已在 create_window 中完成）
+    // 也可以选择分别调用：
+    // imgui.imgui_init(window)
+
+    // 4. 运行主循环
+    fmt.printf("Starting main loop...\n")
+    // imgui.main_loop(window)
     imgui.main_loop(window)
+    // 5. 清理资源
     imgui.sdl_terminate(window)
     fmt.printf("Demo finished.\n")
 }

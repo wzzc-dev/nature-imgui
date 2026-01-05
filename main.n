@@ -1,8 +1,16 @@
+// imgui.n - ImGui C函数绑定声明
 import libc
-import fmt
 
+// SDL3初始化和管理
 #linkid sdl_init
 fn sdl_init():i32
 
+#linkid create_window
+fn create_window():anyptr
+
+#linkid sdl_terminate
+fn sdl_terminate(anyptr window)
+
 #linkid main_loop
-fn main_loop()
+fn main_loop(anyptr window)
+

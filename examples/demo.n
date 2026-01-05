@@ -1,9 +1,18 @@
 import fmt
-import imgui as *
-import libc
+import imgui
 
 fn main() {
-    fmt.printf("Hello, World!")
-    sdl_init()
-    main_loop()
+    fmt.printf("Initializing ImGui Demo...\n")
+
+    // 初始化 SDL 和 ImGui
+    if imgui.sdl_init() != 0 {
+        fmt.printf("Failed to initialize SDL\n")
+        return
+    }
+
+    fmt.printf("ImGui initialized successfully!\n")
+    anyptr window = imgui.create_window();
+    imgui.main_loop(window)
+    imgui.sdl_terminate(window)
+    fmt.printf("Demo finished.\n")
 }

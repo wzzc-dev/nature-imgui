@@ -1,5 +1,5 @@
 // imgui_bindings.cpp
-// C++绑定文件，用于Moonbit调用Dear ImGui库 (WebGPU版本)
+// C++绑定文件，用于 nature-lang 调用Dear ImGui库 (WebGPU版本)
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN

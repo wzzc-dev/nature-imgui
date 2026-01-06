@@ -1,5 +1,5 @@
 // imgui_bindings.h
-// C绑定头文件，声明所有Moonbit调用的函数 (WebGPU版本)
+// C绑定头文件，声明所有nature-lang调用的函数 (WebGPU版本)
 
 #ifndef IMGUI_BINDINGS_H
 #define IMGUI_BINDINGS_H

@@ -355,44 +355,8 @@ static bool InitWGPU(SDL_Window* window)
 {
     WGPUTextureFormat preferred_fmt = WGPUTextureFormat_Undefined;  // acquired from SurfaceCapabilities
 
-    // Google DAWN backend: Adapter and Device acquisition, Surface creation
-#if defined(IMGUI_IMPL_WEBGPU_BACKEND_DAWN)
-    wgpu::InstanceDescriptor instance_desc = {};
-    static constexpr wgpu::InstanceFeatureName timedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
-    instance_desc.requiredFeatureCount = 1;
-    instance_desc.requiredFeatures = &timedWaitAny;
-    wgpu::Instance instance = wgpu::CreateInstance(&instance_desc);
-
-    wgpu::Adapter adapter = RequestAdapter(instance);
-    ImGui_ImplWGPU_DebugPrintAdapterInfo(adapter.Get());
-
-    wgpu_device = RequestDevice(instance, adapter);
-
-    // Create the surface.
-#ifdef __EMSCRIPTEN__
-    wgpu::EmscriptenSurfaceSourceCanvasHTMLSelector canvas_desc = {};
-    canvas_desc.selector = "#canvas";
-
-    wgpu::SurfaceDescriptor surface_desc = {};
-    surface_desc.nextInChain = &canvas_desc;
-    wgpu::Surface surface = instance.CreateSurface(&surface_desc);
-#else
-    wgpu::Surface surface = CreateWGPUSurface(instance.Get(), window);
-#endif
-    if (!surface)
-        return false;
-
-    // Moving Dawn objects into WGPU handles
-    wgpu_instance = instance.MoveToCHandle();
-    wgpu_surface = surface.MoveToCHandle();
-
-    WGPUSurfaceCapabilities surface_capabilities = {};
-    wgpuSurfaceGetCapabilities(wgpu_surface, adapter.Get(), &surface_capabilities);
-
-    preferred_fmt = surface_capabilities.formats[0];
-
     // WGPU backend: Adapter and Device acquisition, Surface creation
-#elif defined(IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
+
     wgpu_instance = wgpuCreateInstance(nullptr);
 
 #ifdef __EMSCRIPTEN__
@@ -432,7 +396,6 @@ static bool InitWGPU(SDL_Window* window)
 
     preferred_fmt = surface_capabilities.formats[0];
 #endif // __EMSCRIPTEN__
-#endif // IMGUI_IMPL_WEBGPU_BACKEND_WGPU
 
     wgpu_surface_configuration.presentMode = WGPUPresentMode_Fifo;
     wgpu_surface_configuration.alphaMode = WGPUCompositeAlphaMode_Auto;

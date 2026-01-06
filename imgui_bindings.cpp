@@ -258,16 +258,17 @@ extern "C" bool button(const char* label) {
     return ImGui::Button(label);
 }
 
-extern "C" void checkbox(const char* label, bool v) {
-    ImGui::Checkbox(label, &v);
+extern "C" void checkbox(const char* label, bool *v) {
+    printf("checkbox: %s, %d\n", label, *v);
+    ImGui::Checkbox(label, v);
 }
 
 extern "C" void slider_float(const char* label, float* v, float v_min, float v_max) {
     ImGui::SliderFloat(label, v, v_min, v_max);
 }
 
-extern "C" void color_edit3(const char* label, float* col) {
-    ImGui::ColorEdit3(label, col);
+extern "C" void color_edit3(const char* label) {
+    ImGui::ColorEdit3(label,  (float*)&g_clear_color);
 }
 
 extern "C" void same_line(void) {
@@ -349,125 +350,6 @@ extern "C" void end_frame(void) {
 extern "C" void render() {
     ImGui::Render();
 }
-extern "C" void main_loop(SDL_Window* window) {
-    // Setup ImGui navigation
-    ImGuiIO* io = setup_imgui_navigation();
-    // Our state
-    bool _show_demo_window = true;
-    bool show_another_window = false;
-
-    // Main loop
-    bool done = false;
-
-    while (!done)
-
-    {
-        
-        done = imgui_should_exit(window);
-
-        begin_frame(window);
-    
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (_show_demo_window)
-            show_demo_window(&_show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            begin_window("Hello, world!");
-            text("This is some useful text.");
-            checkbox("Demo Window", &_show_demo_window);
-            checkbox("Another Window", &show_another_window);
-            slider_float("float", &f, 0.0f, 1.0f);
-            color_edit3("clear color", (float*)&g_clear_color);
-            
-            if (button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            same_line();
-            char buf[100];
-            sprintf(buf, "counter = %d", counter);
-            text(buf);
-            char buf2[100];
-            sprintf(buf2, "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
-            text(buf2);
-            end_window();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window) {
-            begin_window("Another Window");
-            text("Hello from another window!");
-            if (button("Close Me"))
-                show_another_window = false;
-            end_window();
-        }
-
-        // Rendering
-        render();
-
-        end_frame();
-    }
-}
-
-// extern "C" void main_loop(SDL_Window* window) {
-//     ImGuiIO& io = ImGui::GetIO(); (void)io;
-//     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-//     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-
-//     // Our state
-//     bool _show_demo_window = true;
-//     bool show_another_window = false;
-
-//     // Main loop
-//     bool done = false;
-
-//     while (!done) {
-//         // Poll events
-//         done = imgui_should_exit(window);
-
-//         // Begin frame (handles resize, surface check, and ImGui new frame)
-//         begin_frame(window);
-
-//         // Show demo window
-//         if (_show_demo_window)
-//             show_demo_window(&_show_demo_window);
-
-//         // Show simple window
-//         {
-//             static float f = 0.0f;
-//             static int counter = 0;
-
-//             begin_window("Hello, world!");
-//             text("This is some useful text.");
-//             checkbox("Demo Window", &_show_demo_window);
-//             checkbox("Another Window", &show_another_window);
-//             slider_float("float", &f, 0.0f, 1.0f);
-//             color_edit3("clear color", (float*)&g_clear_color);
-
-//             if (ImGui::Button("Button"))
-//                 counter++;
-//             ImGui::SameLine();
-//             ImGui::Text("counter = %d", counter);
-
-//             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-//             end_window();
-//         }
-
-//         // Show another window
-//         if (show_another_window) {
-//             begin_window("Another Window");
-//             text("Hello from another window!");
-//             if (ImGui::Button("Close Me"))
-//                 show_another_window = false;
-//             end_window();
-//         }
-
-//         // End frame (renders and presents)
-//         end_frame();
-//     }
-// }
 
 static bool InitWGPU(SDL_Window* window)
 {

@@ -2,7 +2,7 @@ build/*
 external/*
 target/*
 .codebuddy/*
+lib/*
 lib/.DS_Store
 main
 imgui.ini
-lib/*

@@ -6,6 +6,7 @@
 
 #include <SDL3/SDL.h>
 #include <stdbool.h>
+#include "imgui.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +19,8 @@ void sdl_terminate(SDL_Window* window);
 // 窗口创建和管理
 SDL_Window* create_window(const char* title, int width, int height);
 void destroy_window(SDL_Window* window);
+
+ImGuiIO* setup_imgui_navigation(void);
 
 // ImGui 上下文管理
 void imgui_init(SDL_Window* window);
@@ -37,8 +40,8 @@ void begin_window(const char* name);
 void end_window(void);
 void text(const char* text);
 bool button(const char* label);
-void checkbox(const char* label, bool* v);
-void slider_float(const char* label, float* v, float v_min, float v_max);
+void checkbox(const char* label, bool v);
+void slider_float(const char* label, float v, float v_min, float v_max);
 void color_edit3(const char* label, float* col);
 void same_line(void);
 

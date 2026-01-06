@@ -15,6 +15,9 @@ fn create_window(anyptr title, i32 width, i32 height):anyptr
 #linkid destroy_window
 fn destroy_window(anyptr window)
 
+#linkid setup_imgui_navigation
+fn setup_imgui_navigation():anyptr
+
 // ImGui 上下文管理
 #linkid imgui_init
 fn imgui_init(anyptr window)
@@ -38,28 +41,28 @@ fn imgui_should_exit(anyptr window):bool
 
 // 常用窗口和控件
 #linkid show_demo_window
-fn show_demo_window(anyptr p_open)
+fn show_demo_window(bool p_open)
 
 #linkid begin_window
-fn begin_window(anyptr name)
+fn begin_window(libc.cstr name)
 
 #linkid end_window
 fn end_window()
 
 #linkid text
-fn text(anyptr text)
+fn text(libc.cstr text)
 
 #linkid button
-fn button(anyptr label):bool
+fn button(libc.cstr label):bool
 
 #linkid checkbox
-fn checkbox(anyptr label, anyptr v)
+fn checkbox(libc.cstr label, bool v)
 
 #linkid slider_float
-fn slider_float(anyptr label, anyptr v, f32 v_min, f32 v_max)
+fn slider_float(libc.cstr label, f32 v, f32 v_min, f32 v_max)
 
 #linkid color_edit3
-fn color_edit3(anyptr label, anyptr col)
+fn color_edit3(libc.cstr label, f32 col)
 
 #linkid same_line
 fn same_line()

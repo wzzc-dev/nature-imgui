@@ -1,3 +1,4 @@
+import co
 import fmt
 import imgui
 
@@ -27,7 +28,62 @@ fn main() {
     // 4. 运行主循环
     fmt.printf("Starting main loop...\n")
     // imgui.main_loop(window)
-    imgui.main_loop(window)
+    
+    anyptr io = imgui.setup_imgui_navigation()
+    bool show_demo_window = true
+    bool show_another_window = false
+
+    bool done = false
+
+    for !done {
+        done = imgui.imgui_should_exit(window)
+        imgui.begin_frame(window)
+        fmt.printf("f begin_frame:\n")
+        if show_demo_window {
+            imgui.show_demo_window(show_demo_window)
+        }
+
+        f32 f = 0.0
+        f32 count = 0
+
+        imgui.begin_window("Hello World".to_cstr())
+        fmt.printf("f begin_window:\n")
+        imgui.text("Hello World".to_cstr())
+        fmt.printf("f text:\n")
+        imgui.checkbox("Show Demo Window".to_cstr(), show_demo_window)
+        fmt.printf("f checkbox:\n")
+        imgui.checkbox("Show Another Window".to_cstr(), show_another_window)
+        fmt.printf("f checkbox:\n")
+        imgui.slider_float("Float".to_cstr(), f, 0.0, 1.0)
+        fmt.printf("f slider_float:\n")
+        imgui.color_edit3("Color".to_cstr(), count)
+        fmt.printf("color_edit3")
+        if imgui.button("Button".to_cstr()) {
+            count += 1
+        }
+        fmt.printf("Button clicked %f times\n", count)
+        imgui.same_line()
+        var count_str = "Count: " + fmt.sprintf("%f", count)
+        imgui.text(count_str.to_cstr())
+        var text = fmt.sprintf("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / 10, 10, f)
+        imgui.text(text.to_cstr())
+
+        imgui.end_window()
+
+        if show_another_window {
+            imgui.begin_window("Another Window".to_cstr())
+            imgui.text("Hello from another window!".to_cstr())
+            if imgui.button("Close Me".to_cstr()) {
+                show_another_window = false
+            }
+            imgui.end_window()
+        }
+        fmt.printf("f: %f\n", f)
+        imgui.imgui_render()
+        fmt.printf("f imgui_render: %f\n", f)
+        imgui.end_frame()
+        fmt.printf("f end_frame: %f\n", f)
+    }
     // 5. 清理资源
     imgui.sdl_terminate(window)
     fmt.printf("Demo finished.\n")

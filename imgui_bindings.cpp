@@ -8,7 +8,6 @@
 #include <windows.h>
 #endif
 
-#include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_wgpu.h>
 #include <SDL3/SDL.h>
@@ -85,6 +84,15 @@ static void ResizeSurface(int width, int height)
     wgpu_surface_configuration.width  = wgpu_surface_width  = width;
     wgpu_surface_configuration.height = wgpu_surface_height = height;
     wgpuSurfaceConfigure( wgpu_surface, (WGPUSurfaceConfiguration*)&wgpu_surface_configuration );
+}
+
+// Setup ImGui navigation (keyboard and gamepad controls)
+extern "C" ImGuiIO* setup_imgui_navigation(void)
+{
+    ImGuiIO* io = &ImGui::GetIO();
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    return io;
 }
 
 extern "C" int sdl_init(void)
@@ -250,8 +258,8 @@ extern "C" bool button(const char* label) {
     return ImGui::Button(label);
 }
 
-extern "C" void checkbox(const char* label, bool* v) {
-    ImGui::Checkbox(label, v);
+extern "C" void checkbox(const char* label, bool v) {
+    ImGui::Checkbox(label, &v);
 }
 
 extern "C" void slider_float(const char* label, float* v, float v_min, float v_max) {
@@ -266,6 +274,9 @@ extern "C" void same_line(void) {
     ImGui::SameLine();
 }
 
+extern "C" void Text(const char* fmt, ...) {
+    ImGui::Text(fmt);
+}
 extern "C" void set_clear_color(float r, float g, float b, float a) {
     g_clear_color = ImVec4(r, g, b, a);
 }
@@ -339,11 +350,8 @@ extern "C" void render() {
     ImGui::Render();
 }
 extern "C" void main_loop(SDL_Window* window) {
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
+    // Setup ImGui navigation
+    ImGuiIO* io = setup_imgui_navigation();
     // Our state
     bool _show_demo_window = true;
     bool show_another_window = false;
@@ -378,9 +386,12 @@ extern "C" void main_loop(SDL_Window* window) {
             if (button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
             same_line();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            char buf[100];
+            sprintf(buf, "counter = %d", counter);
+            text(buf);
+            char buf2[100];
+            sprintf(buf2, "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
+            text(buf2);
             end_window();
         }
 

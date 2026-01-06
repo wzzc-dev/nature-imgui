@@ -56,13 +56,13 @@ fn text(libc.cstr text)
 fn button(libc.cstr label):bool
 
 #linkid checkbox
-fn checkbox(libc.cstr label, bool v)
+fn checkbox(libc.cstr label, rawptr<bool> v)
 
 #linkid slider_float
-fn slider_float(libc.cstr label, f32 v, f32 v_min, f32 v_max)
+fn slider_float(libc.cstr label, rawptr<f32> v, f32 v_min, f32 v_max)
 
 #linkid color_edit3
-fn color_edit3(libc.cstr label, f32 col)
+fn color_edit3(libc.cstr label)
 
 #linkid same_line
 fn same_line()

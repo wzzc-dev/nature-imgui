@@ -34,7 +34,8 @@ fn main() {
     bool show_another_window = false
 
     bool done = false
-
+    f32 f = 0.0
+    f32 count = 0
     for !done {
         done = imgui.imgui_should_exit(window)
         imgui.begin_frame(window)
@@ -43,20 +44,17 @@ fn main() {
             imgui.show_demo_window(show_demo_window)
         }
 
-        f32 f = 0.0
-        f32 count = 0
-
         imgui.begin_window("Hello World".to_cstr())
         fmt.printf("f begin_window:\n")
         imgui.text("Hello World".to_cstr())
         fmt.printf("f text:\n")
-        imgui.checkbox("Show Demo Window".to_cstr(), show_demo_window)
+        imgui.checkbox("Show Demo Window".to_cstr(), &show_demo_window)
         fmt.printf("f checkbox:\n")
-        imgui.checkbox("Show Another Window".to_cstr(), show_another_window)
+        imgui.checkbox("Show Another Window".to_cstr(), &show_another_window)
         fmt.printf("f checkbox:\n")
-        imgui.slider_float("Float".to_cstr(), f, 0.0, 1.0)
+        imgui.slider_float("Float".to_cstr(), &f, 0.0, 1.0)
         fmt.printf("f slider_float:\n")
-        imgui.color_edit3("Color".to_cstr(), count)
+        imgui.color_edit3("Color".to_cstr())
         fmt.printf("color_edit3")
         if imgui.button("Button".to_cstr()) {
             count += 1

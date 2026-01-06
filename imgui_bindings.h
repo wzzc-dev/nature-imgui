@@ -40,7 +40,7 @@ void begin_window(const char* name);
 void end_window(void);
 void text(const char* text);
 bool button(const char* label);
-void checkbox(const char* label, bool v);
+void checkbox(const char* label, bool* v);
 void slider_float(const char* label, float v, float v_min, float v_max);
 void color_edit3(const char* label, float* col);
 void same_line(void);

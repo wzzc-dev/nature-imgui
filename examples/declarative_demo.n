@@ -1,0 +1,60 @@
+// declarative_demo.n
+// 声明式UI示例程序
+import co
+import fmt
+import imgui
+import imgui.declarative
+
+// 回调函数
+fn on_button_click(anyptr user_data) {
+    fmt.printf("Button clicked!\n")
+}
+
+fn on_save_click(anyptr user_data) {
+    fmt.printf("Settings saved!\n")
+}
+
+fn main() {
+    fmt.printf("Initializing Declarative UI Demo...\n")
+
+    // 1. 初始化 SDL
+    if imgui.sdl_init() != 0 {
+        fmt.printf("Failed to initialize SDL\n")
+        return
+    }
+
+    fmt.printf("SDL initialized successfully!\n")
+
+    // 2. 创建窗口
+    var title = "Declarative UI Demo"
+    anyptr title_ptr = title.to_cstr() as anyptr
+    anyptr window = imgui.create_window(title_ptr, 1280, 800)
+
+    fmt.printf("Window created successfully!\n")
+
+    // 3. 初始化ImGui
+    imgui.setup_imgui_navigation()
+
+    // 4. 初始化声明式UI渲染器
+    declarative.init_declarative_renderer()
+
+    // 5. 主循环
+    fmt.printf("Starting main loop...\n")
+
+    bool done = false
+    for !done {
+        done = imgui.imgui_should_exit(window)
+        imgui.begin_frame(window)
+
+        // 使用声明式UI渲染
+        declarative.render_declarative_ui()
+
+        imgui.imgui_render()
+        imgui.end_frame()
+    }
+
+    // 6. 清理资源
+    declarative.shutdown_declarative_renderer()
+    imgui.sdl_terminate(window)
+    fmt.printf("Demo finished.\n")
+}

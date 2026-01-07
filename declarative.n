@@ -1,0 +1,123 @@
+// declarative.n - 声明式UI的nature-lang绑定
+import libc
+
+// ============================================================================
+// 初始化和清理
+// ============================================================================
+
+#linkid init_declarative_renderer
+fn init_declarative_renderer()
+
+#linkid shutdown_declarative_renderer
+fn shutdown_declarative_renderer()
+
+// ============================================================================
+// Widget创建函数
+// ============================================================================
+
+#linkid decl_create_text_widget
+fn decl_create_text_widget(libc.cstr text):anyptr
+
+#linkid decl_create_button_widget
+fn decl_create_button_widget(libc.cstr label, anyptr callback):anyptr
+
+#linkid decl_create_checkbox_widget
+fn decl_create_checkbox_widget(libc.cstr label, anyptr state):anyptr
+
+#linkid decl_create_slider_widget
+fn decl_create_slider_widget(libc.cstr label, anyptr state, f32 min, f32 max):anyptr
+
+#linkid decl_create_container_widget
+fn decl_create_container_widget(anyptr children, i32 count):anyptr
+
+#linkid decl_create_window_widget
+fn decl_create_window_widget(libc.cstr title, anyptr child):anyptr
+
+// ============================================================================
+// 状态管理函数
+// ============================================================================
+
+#linkid decl_create_state_bool
+fn decl_create_state_bool(bool value):anyptr
+
+#linkid decl_create_state_float
+fn decl_create_state_float(f32 value):anyptr
+
+#linkid decl_create_state_int
+fn decl_create_state_int(i32 value):anyptr
+
+#linkid decl_create_state_string
+fn decl_create_state_string(libc.cstr value):anyptr
+
+#linkid decl_get_state_bool
+fn decl_get_state_bool(anyptr state):bool
+
+#linkid decl_get_state_float
+fn decl_get_state_float(anyptr state):f32
+
+#linkid decl_get_state_int
+fn decl_get_state_int(anyptr state):i32
+
+#linkid decl_get_state_string
+fn decl_get_state_string(anyptr state):libc.cstr
+
+#linkid decl_set_state_bool
+fn decl_set_state_bool(anyptr state, bool value)
+
+#linkid decl_set_state_float
+fn decl_set_state_float(anyptr state, f32 value)
+
+#linkid decl_set_state_int
+fn decl_set_state_int(anyptr state, i32 value)
+
+#linkid decl_set_state_string
+fn decl_set_state_string(anyptr state, libc.cstr value)
+
+#linkid decl_release_state
+fn decl_release_state(anyptr state)
+
+// ============================================================================
+// WidgetTree管理函数
+// ============================================================================
+
+#linkid decl_create_widget_tree
+fn decl_create_widget_tree(anyptr root):anyptr
+
+#linkid decl_build_widget_tree
+fn decl_build_widget_tree(anyptr tree)
+
+#linkid decl_update_widget_tree
+fn decl_update_widget_tree(anyptr tree, anyptr new_root)
+
+#linkid decl_render_widget_tree
+fn decl_render_widget_tree(anyptr tree)
+
+#linkid decl_release_widget_tree
+fn decl_release_widget_tree(anyptr tree)
+
+// ============================================================================
+// 渲染函数
+// ============================================================================
+
+#linkid render_declarative_ui
+fn render_declarative_ui()
+
+// ============================================================================
+// 内存管理函数
+// ============================================================================
+
+#linkid decl_release_widget
+fn decl_release_widget(anyptr widget)
+
+// ============================================================================
+// 调试函数
+// ============================================================================
+
+#linkid decl_enable_render_debug
+fn decl_enable_render_debug(bool enable)
+
+#linkid decl_print_render_stats
+fn decl_print_render_stats()
+
+#linkid decl_print_widget_tree
+fn decl_print_widget_tree(anyptr widget, i32 depth)

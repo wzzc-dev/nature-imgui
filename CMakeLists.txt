@@ -43,6 +43,7 @@ elseif(APPLE)
         set_target_properties(SDL3::SDL3 PROPERTIES
             IMPORTED_LOCATION "${SDL3_INSTALL_DIR}/lib/libSDL3.a"
             INTERFACE_INCLUDE_DIRECTORIES "${SDL3_INSTALL_DIR}/include"
+            INTERFACE_LINK_LIBRARIES "${OS_FRAMEWORKS}"
         )
         set(SDL3_FOUND TRUE)
         message(STATUS "SDL3 static library found at: ${SDL3_INSTALL_DIR}")
@@ -69,6 +70,40 @@ if(NOT EMSCRIPTEN)
     endif()
 endif()
 
+# ============================================================================
+# 设置平台特定的链接库
+# ============================================================================
+
+if(APPLE)
+    # macOS框架
+    set(OS_FRAMEWORKS
+        "-framework CoreFoundation"
+        "-framework QuartzCore"
+        "-framework Metal"
+        "-framework MetalKit"
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework AVFoundation"
+        "-framework CoreMedia"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+        "-framework GameController"
+        "-framework ForceFeedback"
+        "-framework CoreHaptics"
+        "-framework Carbon"
+        "-framework CoreGraphics"
+        "-framework CoreServices"
+        "-framework UniformTypeIdentifiers"
+    )
+elseif(UNIX AND NOT APPLE)
+    # Linux库
+    set(OS_FRAMEWORKS "-lm -ldl")
+elseif(WIN32)
+    # Windows库
+    set(OS_FRAMEWORKS "d3dcompiler ws2_32 userenv bcrypt ntdll opengl32 Propsys RuntimeObject")
+endif()
+
 # 添加Dear ImGui库
 # 假设Dear ImGui在imgui子目录中，如果没有，请修改路径
 set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/external/imgui")
@@ -87,6 +122,9 @@ set(IMGUI_SOURCES
 # 添加C++绑定源文件
 set(BINDING_SOURCES
     imgui_bindings.cpp
+    declarative_ui.cpp
+    declarative_renderer.cpp
+    declarative_ui_bindings.cpp
 )
 
 # 创建静态库
@@ -127,40 +165,29 @@ if(WIN32)
         set(WGPU_NATIVE_LIB_DIR ${IMGUI_WGPU_DIR}/lib)
         find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_NATIVE_LIB_DIR})
 
-        set(OS_LIBRARIES d3dcompiler ws2_32 userenv bcrypt ntdll opengl32 Propsys RuntimeObject)
         target_link_libraries(imgui
             ${WGPU_LIBRARY}
-            ${OS_LIBRARIES}
+            ${OS_FRAMEWORKS}
             SDL3::SDL3
         )
     else()
         message(FATAL_ERROR "SDL3 or WGPU not found")
     endif()
-elseif(UNIX AND NOT APPLE)
+elseif(UNIX)
     if(SDL3_FOUND AND IMGUI_WGPU_DIR)
         set(WGPU_NATIVE_LIB_DIR ${IMGUI_WGPU_DIR}/lib)
         find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_NATIVE_LIB_DIR})
 
-        set(OS_LIBRARIES "-lm -ldl")
-        target_link_libraries(imgui
-            ${WGPU_LIBRARY}
-            ${OS_LIBRARIES}
-            SDL3::SDL3
-        )
-    else()
-        message(FATAL_ERROR "SDL3 or WGPU not found")
-    endif()
-elseif(APPLE)
-    if(SDL3_FOUND AND IMGUI_WGPU_DIR)
+        message(STATUS "WGPU_LIBRARY: ${WGPU_LIBRARY}")
+        message(STATUS "OS_FRAMEWORKS: ${OS_FRAMEWORKS}")
         set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
         set_source_files_properties(${CMAKE_SOURCE_DIR}/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
         set(WGPU_NATIVE_LIB_DIR ${IMGUI_WGPU_DIR}/lib)
         find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_NATIVE_LIB_DIR})
 
-        set(OS_LIBRARIES "-framework CoreFoundation -framework QuartzCore -framework Metal -framework MetalKit -framework Cocoa")
         target_link_libraries(imgui
             ${WGPU_LIBRARY}
-            ${OS_LIBRARIES}
+            ${OS_FRAMEWORKS}
             SDL3::SDL3
         )
     else()
@@ -176,4 +203,107 @@ endif()
 message(STATUS "SDL3 found: ${SDL3_FOUND}")
 message(STATUS "WGPU found: ${IMGUI_WGPU_DIR}")
 message(STATUS "Building static library: libimgui.a (imgui.lib on Windows)")
+
+# ============================================================================
+# 测试目标
+# ============================================================================
+
+# 测试可执行文件
+# add_executable(declarative_ui_test
+#     tests/declarative_ui_test.cpp
+# )
+
+# target_link_libraries(declarative_ui_test
+#     imgui
+#     ${WGPU_LIBRARY}
+#     ${OS_FRAMEWORKS}
+#     SDL3::SDL3
+# )
+
+# target_include_directories(declarative_ui_test
+#     PRIVATE
+#     ${IMGUI_DIR}
+#     ${IMGUI_DIR}/backends
+#     ${CMAKE_SOURCE_DIR}
+# )
+
+# # 简单测试
+# add_executable(simple_test
+#     tests/simple_test.cpp
+# )
+
+# target_link_libraries(simple_test
+#     imgui
+#     ${WGPU_LIBRARY}
+#     ${OS_FRAMEWORKS}
+#     SDL3::SDL3
+# )
+
+# target_include_directories(simple_test
+#     PRIVATE
+#     ${IMGUI_DIR}
+#     ${IMGUI_DIR}/backends
+#     ${CMAKE_SOURCE_DIR}
+# )
+
+# # 高级声明式UI示例
+add_executable(advanced_declarative_demo
+    examples/advanced_declarative_demo.cpp
+)
+
+target_link_libraries(advanced_declarative_demo
+    imgui
+    ${WGPU_LIBRARY}
+    ${OS_FRAMEWORKS}
+    SDL3::SDL3
+)
+
+target_include_directories(advanced_declarative_demo
+    PRIVATE
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${CMAKE_SOURCE_DIR}
+)
+
+# # macOS平台特殊处理（如有需要）
+# # 注意：测试和示例程序通常不需要Objective-C++编译
+# # 只有直接使用macOS frameworks的代码才需要Objective-C++
+
+# # 简单声明式UI示例（不依赖SDL3高级功能）
+# add_executable(simple_declarative_demo
+#     examples/simple_declarative_demo.cpp
+# )
+
+# target_link_libraries(simple_declarative_demo
+#     imgui
+#     SDL3::SDL3
+# )
+
+# target_include_directories(simple_declarative_demo
+#     PRIVATE
+#     ${IMGUI_DIR}
+#     ${IMGUI_DIR}/backends
+#     ${CMAKE_SOURCE_DIR}
+# )
+
+# # 内存测试（不依赖SDL3）
+# add_executable(memory_test
+#     tests/memory_test.cpp
+# )
+
+# target_link_libraries(memory_test
+#     imgui
+# )
+
+# target_include_directories(memory_test
+#     PRIVATE
+#     ${IMGUI_DIR}
+#     ${IMGUI_DIR}/backends
+#     ${CMAKE_SOURCE_DIR}
+# )
+
+# # 启用测试
+# enable_testing()
+# add_test(NAME declarative_ui_test COMMAND declarative_ui_test)
+# add_test(NAME simple_test COMMAND simple_test)
 

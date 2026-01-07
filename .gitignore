@@ -1,8 +1,7 @@
-build/*
-external/*
-target/*
-.codebuddy/*
-lib/*
-lib/.DS_Store
+build/
+external/
+target
+.codebuddy/
+lib/
 main
 imgui.ini

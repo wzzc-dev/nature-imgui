@@ -121,10 +121,10 @@ set(IMGUI_SOURCES
 
 # 添加C++绑定源文件
 set(BINDING_SOURCES
-    imgui_bindings.cpp
-    declarative_ui.cpp
-    declarative_renderer.cpp
-    declarative_ui_bindings.cpp
+    src/cpp/bindings/imgui_bindings.cpp
+    src/cpp/declarative_ui/declarative_ui.cpp
+    src/cpp/renderer/declarative_renderer.cpp
+    src/cpp/bindings/declarative_ui_bindings.cpp
 )
 
 # 创建静态库
@@ -135,6 +135,10 @@ target_include_directories(imgui PRIVATE
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
     ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_SOURCE_DIR}/src/cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/declarative_ui
+    ${CMAKE_SOURCE_DIR}/src/cpp/renderer
+    ${CMAKE_SOURCE_DIR}/src/cpp/bindings
 )
 
 # 设置编译选项
@@ -153,7 +157,7 @@ endif()
 # Apple平台特殊编译选项
 if(APPLE)
     set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/src/cpp/bindings/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_app.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set_source_files_properties(${CMAKE_SOURCE_DIR}/native/src/native_imgui.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif()
@@ -181,7 +185,7 @@ elseif(UNIX)
         message(STATUS "WGPU_LIBRARY: ${WGPU_LIBRARY}")
         message(STATUS "OS_FRAMEWORKS: ${OS_FRAMEWORKS}")
         set_source_files_properties(${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
-        set_source_files_properties(${CMAKE_SOURCE_DIR}/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+        set_source_files_properties(${CMAKE_SOURCE_DIR}/src/cpp/bindings/imgui_bindings.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
         set(WGPU_NATIVE_LIB_DIR ${IMGUI_WGPU_DIR}/lib)
         find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_NATIVE_LIB_DIR})
 
@@ -263,6 +267,10 @@ target_include_directories(advanced_declarative_demo
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src/cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/declarative_ui
+    ${CMAKE_SOURCE_DIR}/src/cpp/renderer
+    ${CMAKE_SOURCE_DIR}/src/cpp/bindings
 )
 
 # # macOS平台特殊处理（如有需要）

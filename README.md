@@ -1,19 +1,3 @@
-# Nature ImGui
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](package.toml)
-
-Nature ImGui 是一个为 **nature-lang** 语言提供 Dear ImGui 图形用户界面库绑定的项目。本项目使用 WebGPU 作为渲染后端，SDL3 处理窗口和输入事件，为 nature-lang 开发者提供现代、高效的 GUI 开发体验。
-
-## 特性
-
-- 🎨 **即时模式 GUI** - 简单直观的 API 设计
-- 🚀 **WebGPU 渲染** - 高性能跨平台图形渲染
-- 🖥️ **跨平台支持** - 支持 Windows、macOS 和 Linux
-- 🔧 **完整功能覆盖** - 窗口、按钮、滑块、颜色编辑器等常用控件
-- ⌨️ **输入支持** - 键盘和手柄导航
-- 📐 **DPI 缩放** - 自动适应高分辨率屏幕
-- 🎯 **nature-lang 原生集成** - 为 nature-lang 语言优化的 FFI 绑定
 
 ## 技术栈
 
@@ -26,30 +10,6 @@ Nature ImGui 是一个为 **nature-lang** 语言提供 Dear ImGui 图形用户�
 | **构建系统** | CMake + Shell 脚本 |
 | **目标语言** | [nature-lang](https://nature-lang.cn/) - 现代 AOT 编译语言 |
 
-## 项目结构
-
-```
-nature-imgui/
-├── imgui_bindings.h           # C 绑定头文件
-├── imgui_bindings.cpp         # C++ 绑定实现
-├── CMakeLists.txt            # CMake 构建配置
-├── build.sh                  # 构建脚本
-├── package.toml              # 包管理配置
-├── main.n                    # 主入口模块
-├── examples/                 # 示例程序
-│   ├── demo.n               # 完整示例
-│   └── example.n            # 简单示例
-├── external/                 # 外部依赖
-│   ├── imgui/               # Dear ImGui 源码
-│   ├── SDL/                 # SDL3 源码
-│   └── wgpu-*/              # WGPU-Native 库
-├── lib/                      # 预编译库文件
-│   └── darwin_arm64/        # macOS ARM64 库
-│       ├── libimgui.a
-│       ├── libSDL3.a
-│       └── libwgpu_native.a
-└── tests/                    # 测试目录
-```
 
 ## 快速开始
 
@@ -359,12 +319,3 @@ A: 检查 DPI 缩放设置，确保调用 `setup_imgui_navigation()`。
 - [WGPU-Native](https://github.com/gfx-rs/wgpu-native) - WebGPU 的 Rust 实现
 - [nature-lang](https://nature-lang.cn/) - 现代 AOT 编译语言
 
-## 联系方式
-
-- **项目主页**: [GitHub Repository]
-- **问题反馈**: [GitHub Issues]
-- **文档**: [项目 Wiki]
-
----
-
-Made with ❤️ by Nature GUI Team

@@ -1,55 +1,15 @@
-# Nature ImGui
+# 技术栈
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](package.toml)
-
-Nature ImGui 是一个为 **nature-lang** 语言提供 Dear ImGui 图形用户界面库绑定的项目。本项目使用 WebGPU 作为渲染后端，SDL3 处理窗口和输入事件，为 nature-lang 开发者提供现代、高效的 GUI 开发体验。
-
-## 特性
-
-- 🎨 **即时模式 GUI** - 简单直观的 API 设计
-- 🚀 **WebGPU 渲染** - 高性能跨平台图形渲染
-- 🖥️ **跨平台支持** - 支持 Windows、macOS 和 Linux
-- 🔧 **完整功能覆盖** - 窗口、按钮、滑块、颜色编辑器等常用控件
-- ⌨️ **输入支持** - 键盘和手柄导航
-- 📐 **DPI 缩放** - 自动适应高分辨率屏幕
-- 🎯 **nature-lang 原生集成** - 为 nature-lang 语言优化的 FFI 绑定
-
-## 技术栈
-
-| 组件 | 说明 |
-|------|------|
-| **GUI 框架** | [Dear ImGui](https://github.com/ocornut/imgui) - 即时模式 GUI 库 |
-| **渲染后端** | [WebGPU](https://www.w3.org/TR/webgpu/) - 现代图形 API |
+| 组件            | 说明                                                                      |
+| ------------- | ----------------------------------------------------------------------- |
+| **GUI 框架**    | [Dear ImGui](https://github.com/ocornut/imgui) - 即时模式 GUI 库             |
+| **渲染后端**      | [WebGPU](https://www.w3.org/TR/webgpu/) - 现代图形 API                      |
 | **WebGPU 实现** | [WGPU-Native](https://github.com/gfx-rs/wgpu-native) - WebGPU 的 Rust 实现 |
-| **窗口系统** | [SDL3](https://github.com/libsdl-org/SDL) - 多媒体和输入处理库 |
-| **构建系统** | CMake + Shell 脚本 |
-| **目标语言** | [nature-lang](https://nature-lang.cn/) - 现代 AOT 编译语言 |
+| **窗口系统**      | [SDL3](https://github.com/libsdl-org/SDL) - 多媒体和输入处理库                   |
+| **构建系统**      | CMake + Shell 脚本                                                        |
+| **目标语言**      | [nature-lang](https://nature-lang.cn/) - 现代 AOT 编译语言                    |
 
-## 项目结构
-
-```
-nature-imgui/
-├── imgui_bindings.h           # C 绑定头文件
-├── imgui_bindings.cpp         # C++ 绑定实现
-├── CMakeLists.txt            # CMake 构建配置
-├── build.sh                  # 构建脚本
-├── package.toml              # 包管理配置
-├── main.n                    # 主入口模块
-├── examples/                 # 示例程序
-│   ├── demo.n               # 完整示例
-│   └── example.n            # 简单示例
-├── external/                 # 外部依赖
-│   ├── imgui/               # Dear ImGui 源码
-│   ├── SDL/                 # SDL3 源码
-│   └── wgpu-*/              # WGPU-Native 库
-├── lib/                      # 预编译库文件
-│   └── darwin_arm64/        # macOS ARM64 库
-│       ├── libimgui.a
-│       ├── libSDL3.a
-│       └── libwgpu_native.a
-└── tests/                    # 测试目录
-```
+##
 
 ## 快速开始
 
@@ -58,23 +18,26 @@ nature-imgui/
 - **CMake** (≥ 3.22)
 - **Git**
 - **nature-lang** 编译器
-- **C/C++ 编译器** (GCC/Clang/MSVC)
+- **C/C++ 编译器** (GCC/Clang)
 
 ### 安装依赖
 
 1. 克隆项目：
+
 ```bash
 git clone <repository-url>
 cd nature-imgui
 ```
 
-2. 运行构建脚本自动下载和构建依赖：
+1. 运行构建脚本自动下载和构建依赖：
+
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
 构建脚本会自动：
+
 - 从源码构建 SDL3 静态库
 - 下载 Dear ImGui
 - 检查 WGPU-Native 库
@@ -86,24 +49,19 @@ chmod +x build.sh
 如果构建脚本提示缺少 WGPU-Native，请手动下载：
 
 **macOS (Apple Silicon):**
+
 ```bash
 # 下载 wgpu-macos-aarch64-release
 # 从 https://github.com/gfx-rs/wgpu-native/releases
 # 解压到 external/wgpu-macos-aarch64-release/
 ```
 
-**Linux (x86_64):**
+**Linux (x86\_64):**
+
 ```bash
 # 下载 wgpu-linux-x86_64-release
 # 从 https://github.com/gfx-rs/wgpu-native/releases
 # 解压到 external/wgpu-linux-x86_64-release/
-```
-
-**Windows:**
-```bash
-# 下载 wgpu-windows-x86_64-gnu-release
-# 从 https://github.com/gfx-rs/wgpu-native/releases
-# 解压到 external/wgpu-windows-x86_64-gnu-release/
 ```
 
 ### 编译示例
@@ -122,7 +80,7 @@ nature build --ldflags \
 
 以下是一个完整的示例，展示如何使用 Nature ImGui 创建一个简单的 GUI 程序：
 
-```nature-lang
+```javascript
 import co
 import fmt
 import imgui
@@ -179,7 +137,7 @@ fn main() {
 
 ### 初始化函数
 
-```nature-lang
+```javascript
 // SDL 初始化
 fn sdl_init(): i32
 
@@ -192,7 +150,7 @@ fn setup_imgui_navigation(): anyptr
 
 ### 渲染循环
 
-```nature-lang
+```javascript
 // 开始新帧
 fn begin_frame(anyptr window)
 
@@ -208,7 +166,7 @@ fn imgui_should_exit(anyptr window): bool
 
 ### 窗口和控件
 
-```nature-lang
+```javascript
 // 窗口管理
 fn begin_window(libc.cstr name)
 fn end_window()
@@ -234,14 +192,14 @@ fn show_demo_window(bool p_open)
 
 ### 清理函数
 
-```nature-lang
+```javascript
 // 清理资源
 fn sdl_terminate(anyptr window)
 ```
 
 ### 布局工具
 
-```nature-lang
+```javascript
 // 同行显示
 fn same_line()
 
@@ -272,12 +230,12 @@ make -j$(nproc)
 
 ## 跨平台支持
 
-| 平台 | 架构 | 状态 |
-|------|------|------|
-| macOS | ARM64 (Apple Silicon) | ✅ 支持 |
-| macOS | x86_64 | ⚠️ 需调整 |
-| Linux | x86_64 | ✅ 支持 |
-| Windows | x86_64 | ⚠️ 需调整 |
+| 平台      | 架构                    | 状态     |
+| ------- | --------------------- | ------ |
+| macOS   | ARM64 (Apple Silicon) | ✅ 支持   |
+| macOS   | x86\_64               | ⚠️ 需调整 |
+| Linux   | x86\_64               | ✅ 支持   |
+| Windows | x86\_64               | ⚠️ 需调整 |
 
 ## 依赖说明
 
@@ -286,21 +244,21 @@ make -j$(nproc)
 - **版本**: master 分支
 - **用途**: 即时模式 GUI 框架
 - **许可证**: MIT
-- **仓库**: https://github.com/ocornut/imgui
+- **仓库**: <https://github.com/ocornut/imgui>
 
 ### SDL3
 
 - **版本**: release-3.4.0
 - **用途**: 窗口管理和输入处理
 - **许可证**: zlib
-- **仓库**: https://github.com/libsdl-org/SDL
+- **仓库**: <https://github.com/libsdl-org/SDL>
 
 ### WGPU-Native
 
 - **版本**: 根据发布版本
 - **用途**: WebGPU 实现
 - **许可证**: MIT/Apache 2.0
-- **仓库**: https://github.com/gfx-rs/wgpu-native
+- **仓库**: <https://github.com/gfx-rs/wgpu-native>
 
 ## 开发指南
 
@@ -330,6 +288,7 @@ A: 确保已下载正确平台的 WGPU-Native 库并放置在 `external/` 目录
 ### Q: macOS 上链接错误？
 
 A: 确保添加了所有必要的 frameworks：
+
 ```bash
 -framework Cocoa -framework Metal -framework QuartzCore ...
 ```
@@ -359,12 +318,4 @@ A: 检查 DPI 缩放设置，确保调用 `setup_imgui_navigation()`。
 - [WGPU-Native](https://github.com/gfx-rs/wgpu-native) - WebGPU 的 Rust 实现
 - [nature-lang](https://nature-lang.cn/) - 现代 AOT 编译语言
 
-## 联系方式
-
-- **项目主页**: [GitHub Repository]
-- **问题反馈**: [GitHub Issues]
-- **文档**: [项目 Wiki]
-
 ---
-
-Made with ❤️ by Nature GUI Team
